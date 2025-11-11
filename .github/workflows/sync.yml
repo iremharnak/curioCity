@@ -1,0 +1,51 @@
+name: Sync Endpoints
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+  
+  # Scheduled triggers (UTC)
+  schedule:
+    # Hourly at :00 - sync curiosities
+    - cron: '0 * * * *'
+    # Hourly at :15 - sync extensions
+    - cron: '15 * * * *'
+    # Hourly at :30 - sync hooks
+    - cron: '30 * * * *'
+
+jobs:
+  sync-test:
+    name: Sync Curiosities
+    runs-on: ubuntu-latest
+    # Only run on the :00 schedule or manual dispatch
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 * * * *'
+    steps:
+      - name: Call /api/sync/test
+        run: |
+          curl -sS --fail --retry 3 --retry-all-errors \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.PROD_URL }}/api/sync/test"
+
+  sync-extensions:
+    name: Sync Extensions
+    runs-on: ubuntu-latest
+    # Only run on the :15 schedule or manual dispatch
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '15 * * * *'
+    steps:
+      - name: Call /api/sync/extensions
+        run: |
+          curl -sS --fail --retry 3 --retry-all-errors \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.PROD_URL }}/api/sync/extensions"
+
+  sync-hooks:
+    name: Sync Hooks
+    runs-on: ubuntu-latest
+    # Only run on the :30 schedule or manual dispatch
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 * * * *'
+    steps:
+      - name: Call /api/sync/hooks
+        run: |
+          curl -sS --fail --retry 3 --retry-all-errors \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.PROD_URL }}/api/sync/hooks"

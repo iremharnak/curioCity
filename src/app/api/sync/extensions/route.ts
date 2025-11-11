@@ -19,7 +19,20 @@ type AirtableRecord = {
   };
 };
 
-export async function GET() {
+function assertCronAuth(req: Request) {
+  const secret = process.env.CRON_SECRET;
+  const hdr = req.headers.get("authorization") || "";
+  const token = hdr.startsWith("Bearer ") ? hdr.slice(7) : new URL(req.url).searchParams.get("token");
+  if (!secret || token !== secret) {
+    return new Response(JSON.stringify({ ok: false, error: "unauthorized" }), { status: 401 });
+  }
+  return null;
+}
+
+export async function GET(req: Request) {
+  const unauth = assertCronAuth(req);
+  if (unauth) return unauth;
+
   try {
     console.log("[Sync Extensions] Starting Airtable fetch...");
 

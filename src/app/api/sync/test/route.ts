@@ -19,7 +19,20 @@ type AirtableRecord = {
   };
 };
 
-export async function GET() {
+function assertCronAuth(req: Request) {
+  const secret = process.env.CRON_SECRET;
+  const hdr = req.headers.get("authorization") || "";
+  const token = hdr.startsWith("Bearer ") ? hdr.slice(7) : new URL(req.url).searchParams.get("token");
+  if (!secret || token !== secret) {
+    return new Response(JSON.stringify({ ok: false, error: "unauthorized" }), { status: 401 });
+  }
+  return null;
+}
+
+export async function GET(req: Request) {
+  const unauth = assertCronAuth(req);
+  if (unauth) return unauth;
+
   try {
     console.log("[Sync Test] Starting Airtable fetch...");
     
@@ -38,12 +51,12 @@ export async function GET() {
       return NextResponse.json({ ok: true, wrote: 0, reason: "no records" });
     }
 
-  const f = first.fields;
-  const slug = f.Slug || (f["Title (Spark)"] || "").toLowerCase().replace(/\s+/g, "-");
-  const keywords = (f.Keywords || "")
-    .split(",")
-    .map(s => s.trim())
-    .filter(Boolean);
+    const f = first.fields;
+    const slug = f.Slug || (f["Title (Spark)"] || "").toLowerCase().replace(/\s+/g, "-");
+    const keywords = (f.Keywords || "")
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean);
 
     // 2) Upsert to Firestore
     console.log(`[Sync Test] Writing record to Firestore with slug: ${slug}`);
