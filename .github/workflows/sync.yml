@@ -3,15 +3,6 @@ name: Sync Endpoints
 on:
   # Manual trigger
   workflow_dispatch:
-  
-  # Scheduled triggers (UTC)
-  schedule:
-    # Hourly at :00 - sync curiosities
-    - cron: '0 * * * *'
-    # Hourly at :15 - sync extensions
-    - cron: '15 * * * *'
-    # Hourly at :30 - sync hooks
-    - cron: '30 * * * *'
 
 jobs:
   sync-test:
